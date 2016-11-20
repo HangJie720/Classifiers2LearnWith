@@ -1,5 +1,8 @@
 *.pyc
 .*
 octave-workspace
+notMNIST_small.mat
+notMNIST_large.mat
+MNIST.mat
 !.gitignore
 !.gitattributes
