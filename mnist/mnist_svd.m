@@ -1,41 +1,45 @@
 close all
 clear all
 
-% Results with no pre-processing of included dataset:
-% best_k (rank) =  11 
-% accuracy =  0.94513
-% see 'results.pdf'
-% ranks2try = [1:256];  % this will take a while, maybe just check 5:20
-ranks2try = 3
+ranks2try = [11];
 
-load ../datasets/usps/USPS.mat;
-X = fea;
-y = gnd;
-[m, n] = size(X);
-distinct_labels = unique(y)';
+load data/MNIST.mat;  % X_train, y_train, X_test, y_test
+X_train = double(X_train);
+X_test = double(X_test);
+distinct_labels = unique([y_train', y_test']);
+
+% reshape images to 1D
+[m_train, w, h] = size(X_train);
+X_train = reshape(X_train, [m_train, w*h]);
+[m_test, w, h] = size(X_test);
+X_test = reshape(X_test, [m_test, w*h]);
+
+% Let's shuffle, just in case
+train_shuffle = randperm(m_train);
+X_train = X_train(train_shuffle, :);
+y_train = y_train(train_shuffle, :);
+test_shuffle = randperm(m_test);
+X_test = X_test(test_shuffle, :);
+y_test = y_test(test_shuffle, :);
+
+% Let's take 10k of the training examples to serve as a
+% validation set
+m_valid = 10^4;
+X_valid = X_train(1:m_valid, :);
+y_valid = y_train(1:m_valid, :);
+m_train = m_train - m_valid;
+X_train = X_train(m_valid + 1: end, :);
+y_train = y_train(m_valid + 1: end, :);
 
 % normalize data
 % X = X - mean(X);  % hurts accuracy
 % X = X./mean(sum((X-mean(X)).^2));  % doesn't help accuracy
 
-m_train = round(0.6*m);
-X_train = X(1:m_train, :);
-y_train = y(1:m_train);
-
-m_valid = round(0.2*m);
-X_valid = X(m_train + 1 : m_train + m_valid, :);
-y_valid = y(m_train + 1 : m_train + m_valid);
-
-m_test = m - m_valid - m_train;
-X_test = X(m_train + m_valid + 1 : end, :);
-y_test = y(m_train + m_valid + 1 : end);
-
-
 printf('\nCheck Balance:\n')
-printf('Totals -- ')
-for l=distinct_labels
-	printf([num2str(sum(y==l)) ' '])
-end
+% printf('Totals -- ')
+% for l=distinct_labels
+% 	printf([num2str(sum(y==l)) ' '])
+% end
 printf('\nTraining Set -- ')
 for l=distinct_labels
 	printf([num2str(sum(y_train==l)) ' '])
@@ -49,7 +53,12 @@ for l=distinct_labels
 	printf([num2str(sum(y_test==l)) ' '])
 end
 
-% tic
+% Convert to sparse arrays, if it helps speed
+tic
+% X_train = sparse(X_train);
+% X_valid = sparse(X_valid);
+% X_test = sparse(X_test);
+
 printf('\n\nTraining & Validation Stage:\n')
 rank_accuracy = NaN(size(ranks2try));
 for k=ranks2try
@@ -88,4 +97,4 @@ for l=distinct_labels
 end
 
 accuracy = sum(y_test == predicted_labels_test) / m_test
-% toc
+toc
