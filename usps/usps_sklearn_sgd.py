@@ -49,9 +49,6 @@ print("Data dtype:", X_train.dtype)
 
 res = []
 for loss_fcn in loss_choices:
-    print("="*50)
-    print("Method:", loss_fcn)
-    
     # Train
     tr_time = time()
     try:
@@ -66,10 +63,10 @@ for loss_fcn in loss_choices:
     # Z = classifier.predict(X_test)
     score = classifier.score(X_valid, y_valid)
     te_time = time() - te_time
-    print("Training time:", tr_time)
-    # print("Testing time:", te_time)
-    print("~~Validation Accuracy: {}\n".format(score))
     res.append((loss_fcn, score, tr_time, te_time))
+    report = ("Method: {:>27} | Time: {:.3f}s | Accuracy: {:.2f}%"
+              "".format(loss_fcn, tr_time + te_time, 100*score))
+    print(report)
 
 print('*'*50)
 from operator import itemgetter
@@ -77,7 +74,7 @@ loss_fcn, score, tr_time, te_time = max(res, key=itemgetter(1))
 print('Winner:', loss_fcn)
 print("Training time:", tr_time)
 # print("Testing time:", te_time)
-print("~~Validation Accuracy: {}\n".format(score))
+print("~~Validation Accuracy: {}".format(score))
 classifier = SGDClassifier(loss=loss_fcn).fit(X_train, y_train)
 test_score = classifier.score(X_test, y_test)
 print("~~Test Accuracy: {}\n".format(test_score))
