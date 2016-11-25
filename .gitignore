@@ -1,10 +1,7 @@
 *.pyc
+*.mat
 .*
 octave-workspace
-notMNIST_small.mat
-notMNIST_large.mat
-notMNIST_small_unique.mat
-notMNIST_large_unique.mat
-MNIST.mat
+!data/usps/USPS.mat
 !.gitignore
 !.gitattributes

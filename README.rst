@@ -1,0 +1,2 @@
+This is a library of classifiers put together by Andy Port for his own self-enrichment.
+All databases are formatted in a similar way, as a MATLAB .mat file containing a tensor `X` containing sample points (indexed by the first dimension) and a column vector `y` containing labels.
