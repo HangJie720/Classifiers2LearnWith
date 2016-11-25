@@ -10,13 +10,9 @@ To Get Databases
 ----------------
 With the exception of small databases (e.g. the USPS database of handwritten digits), you must use the shell scripts `get_*.sh` to download (and format) each database.  Note: If you're on Windows, check out the README.txt files in each database's directory or just go through the steps in the `get_*.sh` files -- they mostly just download the compressed databases, extract them, then run some python or octave scripts to reformat them.
 
-Note on 7zip
-------------
-At least one of the `get_*.sh` uses 7zip... I wasn't sure how to extract the 
-
 To Run the Classifiers
 ----------------------
-Some 
+Navigate to Classifiers2LearnWith/Classifiers directory, then run whichever you like.
 
 Note on Matlab
 --------------
