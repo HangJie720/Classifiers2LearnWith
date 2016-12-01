@@ -21,6 +21,7 @@ DATASET = 'usps'
 VALIDATION_PERCENTAGE = .2
 TESTING_PERCENTAGE = .2
 GD_STEPS = 1000
+NORMALIZE = False
 assert 0 < VALIDATION_PERCENTAGE + TESTING_PERCENTAGE < 1
 
 # Load dataset
@@ -65,8 +66,10 @@ y = np.array(onehot(y, distinct_labels)).astype('float32')
 print(y.shape)
 
 # normalize data
-# X = X - mean(X);  % hurts accuracy
-# X = X./mean(sum((X-mean(X)).^2));  % doesn't help accuracy
+if NORMALIZE:
+    # X = X - mean(X)
+    # X = X./mean(sum((X-mean(X)).^2))
+    raise NotImplementedError
 
 m_train = int(0.6*m)
 X_train = X[:m_train]
@@ -82,20 +85,9 @@ y_test = y[m_train + m_valid : len(y) + 1]
 
 
 ### TensorFlow 1-layer fully_connected with (non-stochastic) gradient descent
-
-
 print("Training Set Shape:", X_train.shape)
 print("Testing Set Shape:", X_train.shape)
 print("Data type:", X_train.dtype)
-
-# # Cast training data to acceptable desired type
-# data_type = tf.float32
-# X_train = tf.cast(X_train, data_type) 
-# X_valid = tf.cast(X_valid, data_type) 
-# X_test = tf.cast(X_test, data_type)
-# print("Data recast to:", type(X_train))
-
-
 
 graph = tf.Graph()
 with graph.as_default():
