@@ -1,15 +1,55 @@
-from __future__ import print_function
-import numpy as np
-from scipy.io import loadmat
-from numpy.linalg import norm
+"""
+Designed to compare all classifiers (loss functions) available through 
+sklearn's SGDClassifier.
+"""
+
+# Standard Library Dependencies
+from __future__ import division, print_function
 from warnings import warn
 from time import time
 import os
+from operator import itemgetter
 
+# External Dependencies
+import numpy as np
+from scipy.io import loadmat
+from numpy.linalg import norm
+from sklearn.linear_model import SGDClassifier
+
+all_loss_choices = ['hinge', 'log', 'modified_huber', 'squared_hinge', 
+                    'perceptron', 'squared_loss', 'huber', 
+                    'epsilon_insensitive', 'squared_epsilon_insensitive']
+
+# User Parameters
+DATASET = 'usps'
+VALIDATION_PERCENTAGE = .2
+TESTING_PERCENTAGE = .2
+LOSS_FUNCTIONS = 'all'  # 'all' or a list of SGDClassifier loss functions
+assert 0 < VALIDATION_PERCENTAGE + TESTING_PERCENTAGE < 1
+
+if all:
+    loss_choices = all_loss_choices
+else:
+    loss_choices = LOSS_FUNCTION
+
+# Load dataset
 rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-usps_dict = loadmat(os.path.join(rootdir, 'data', 'usps', 'USPS.mat'))
-X = usps_dict['fea']
-y = usps_dict['gnd'].ravel()
+datadir = os.path.join(rootdir, 'data')
+if DATASET.lower() == 'usps':
+    dataset_dict = loadmat(os.path.join(datadir, 'usps', 'USPS.mat'))
+elif DATASET.lower() == 'mnist':
+    dataset_dict = loadmat(os.path.join(datadir, 'mnist', 'MNIST.mat'))
+elif DATASET.lower() == 'notmnist_small':
+    dataset_dict = loadmat(os.path.join(datadir, 'notMNIST', 
+                            'notMNIST_small_no_duplicates.mat'))
+elif DATASET.lower() == 'notmnist_large':
+    dataset_dict = loadmat(os.path.join(datadir, 'notMNIST', 
+                            'notMNIST_large_no_duplicates.mat'))
+else:
+    dataset_dict = loadmat(DATASET)
+
+X = dataset_dict['X']
+y = dataset_dict['y'].ravel()
 distinct_labels = set(y)
 
 # Flatten images
@@ -40,13 +80,8 @@ m_test = m - m_valid - m_train
 X_test = X[m_train + m_valid : len(X) + 1]
 y_test = y[m_train + m_valid : len(y) + 1]
 
+
 ### Using sklearn and Stochastic Gradient Descent
-from sklearn.linear_model import SGDClassifier
-loss_choices = ['hinge', 'log', 'modified_huber', 'squared_hinge', 
-                'perceptron', 'squared_loss', 'huber', 'epsilon_insensitive', 
-                'squared_epsilon_insensitive']
-
-
 print("Training Set Shape:", X_train.shape)
 print("Testing Set Shape:", X_train.shape)
 print("Data dtype:", X_train.dtype)
@@ -73,7 +108,6 @@ for loss_fcn in loss_choices:
     print(report)
 
 print('*'*50)
-from operator import itemgetter
 loss_fcn, score, tr_time, te_time = max(res, key=itemgetter(1))
 print('Winner:', loss_fcn)
 print("Training time:", tr_time)

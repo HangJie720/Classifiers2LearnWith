@@ -1,3 +1,5 @@
+% Note: This code uses svd once instead svds many times to be faster when
+% searching for the best order of approximation to use 
 close all
 clear all
 
@@ -18,8 +20,9 @@ ranks2try = 'all';
 % printf(['\nWarning: ' num2str(m - length(y)) ' duplicates removed.\n'])
 % [m, n] = size(X);
 
-rootdir = fileparts(fileparts(mfilename('fullpath')));
-load(fullfile(rootdir, 'data', 'notMNIST', 'notMNIST_small_no_duplicates.mat'))  % X, y
+datadir = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'data');
+% load X, y
+load(fullfile(datadir, 'notMNIST', 'notMNIST_small_no_duplicates.mat'))
 
 [m h w] = size(X);
 n = w*h;
@@ -33,7 +36,6 @@ y = y(shuffle, :);
 % parse ranks2try
 if ranks2try == 'all'
 	ranks2try = 1:rank(X);
-	disp(size(X))
 end
 
 % define some variables for convenience
@@ -80,13 +82,18 @@ tic
 % X_test = sparse(X_test);
 
 printf('\n\nTraining & Validation Stage:\n')
+V = NaN(n, n, length(distinct_labels));
+for l=distinct_labels
+	[u s V(:,:,l+1)] = svd(X_train( find(y_train == l) , :));
+end
+clear u s
 rank_accuracy = NaN(size(ranks2try));
 for k=ranks2try
-	tic
+	% tic
 	predicted_labels_valid = NaN(size(y_valid));
 	mins_valid = inf(size(y_valid));
 	for l=distinct_labels
-		[Ulk, Slk, Vlk] = svds(X_train( find(y_train == l) , :), k);
+		Vlk = V(:, 1:k, l+1);
 		X_valid_approx = (Vlk*Vlk'*X_valid')';
 		d = sum((X_valid - X_valid_approx).^2, 2);
 		update_here = find(d < mins_valid);
@@ -96,7 +103,7 @@ for k=ranks2try
 	accuracy = sum(y_valid==predicted_labels_valid) / m_valid;
 	printf(['rank = ' num2str(k) '  |  ' num2str(accuracy)])
 	rank_accuracy(find(ranks2try==k)) = accuracy;
-	toc
+	% toc
 end
 
 plot(ranks2try, rank_accuracy)
@@ -107,8 +114,8 @@ best_k = ranks2try(max_acc_idx)
 predicted_labels_test = NaN(size(y_test));
 mins_test = inf(size(y_test));
 for l=distinct_labels
-	[Ulk, Slk, Vlk] = svds(X_train( find(y_train == l) , :), best_k);
-	% Vlk = Vl(:, 1:best_k);
+	[Ul, Sl, Vl] = svd(X_train( find(y_train == l) , :));
+	Vlk = Vl(:, 1:best_k);
 
 	% try out this label's approximation for X_test 
 	X_test_approx = (Vlk*Vlk'*X_test')';

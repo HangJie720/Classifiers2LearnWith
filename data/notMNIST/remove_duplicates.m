@@ -24,7 +24,7 @@ function remove_duplicates(fn)
 
 	% save('-7',fn, 'images', 'labels', 'unique_rows')
 	out_name = [fn(1:end-4) '_no_duplicates' '.mat']
-	save('-4', out_name, 'X', 'y')
+	save('-6', out_name, 'X', 'y')
 end
 
 remove_duplicates(char(argv()))
