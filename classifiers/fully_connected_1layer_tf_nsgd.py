@@ -20,11 +20,14 @@ import tensorflow as tf
 DATASET = 'usps'
 VALIDATION_PERCENTAGE = .2
 TESTING_PERCENTAGE = .2
-num_steps = 801
+GD_STEPS = 1000
 assert 0 < VALIDATION_PERCENTAGE + TESTING_PERCENTAGE < 1
 
 # Load dataset
-rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try: 
+    rootdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+except:  # in case I'm trying to paste into ipython
+    rootdir = os.getcwd()
 datadir = os.path.join(rootdir, 'data')
 if DATASET.lower() == 'usps':
     dataset_dict = loadmat(os.path.join(datadir, 'usps', 'USPS.mat'))
@@ -39,7 +42,7 @@ elif DATASET.lower() == 'notmnist_large':
 else:
     dataset_dict = loadmat(DATASET)
 
-X = dataset_dict['X']
+X = dataset_dict['X'].astype('float32')
 y = dataset_dict['y'].ravel()
 distinct_labels = set(y)
 
@@ -54,6 +57,12 @@ permutation = range(m)
 shuffle(permutation)
 X = X[permutation]
 y = y[permutation]
+
+# Convert labels to one-hot format
+def onehot(data, ordered_label_set):
+    return [[(1 if l == y else 0) for l in ordered_label_set] for y in data]
+y = np.array(onehot(y, distinct_labels)).astype('float32')
+print(y.shape)
 
 # normalize data
 # X = X - mean(X);  % hurts accuracy
@@ -73,54 +82,59 @@ y_test = y[m_train + m_valid : len(y) + 1]
 
 
 ### TensorFlow 1-layer fully_connected with (non-stochastic) gradient descent
+
+
 print("Training Set Shape:", X_train.shape)
 print("Testing Set Shape:", X_train.shape)
-print("Data dtype:", X_train.dtype)
+print("Data type:", X_train.dtype)
+
+# # Cast training data to acceptable desired type
+# data_type = tf.float32
+# X_train = tf.cast(X_train, data_type) 
+# X_valid = tf.cast(X_valid, data_type) 
+# X_test = tf.cast(X_test, data_type)
+# print("Data recast to:", type(X_train))
+
+
 
 graph = tf.Graph()
 with graph.as_default():
     # Specify shape of input
-    tf_train_dataset = tf.constant(train_dataset[:train_subset, :])
-    tf_train_labels = tf.constant(train_labels[:train_subset])
-    tf_valid_dataset = tf.constant(valid_dataset)
-    tf_test_dataset = tf.constant(test_dataset)
+    tf_X_train = tf.constant(X_train)
+    tf_y_train = tf.constant(y_train)
+    tf_X_valid = tf.constant(X_valid)
+    tf_X_test = tf.constant(X_test)
 
     # Specify variables
-    weights = tf.Variable(
-        tf.truncated_normal([image_size * image_size, num_labels]))
-    biases = tf.Variable(tf.zeros([num_labels]))
+    weights = tf.Variable(tf.truncated_normal([n, len(distinct_labels)]))
+    biases = tf.Variable(tf.zeros([len(distinct_labels)]))
 
     # Training
-    logits = tf.matmul(tf_train_dataset, weights) + biases
+    logits = tf.matmul(tf_X_train, weights) + biases
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-                                    logits, tf_train_labels))
+                                    logits, tf_y_train))
     optimizer = tf.train.GradientDescentOptimizer(0.5).minimize(loss)
 
     # Make Predictions
     train_prediction = tf.nn.softmax(logits)
-    valid_prediction = tf.nn.softmax(
-                        tf.matmul(tf_valid_dataset, weights) + biases)
-    test_prediction = tf.nn.softmax(
-                        tf.matmul(tf_test_dataset, weights) + biases)
-
-
+    valid_prediction = tf.nn.softmax(tf.matmul(tf_X_valid, weights) + biases)
+    test_prediction = tf.nn.softmax(tf.matmul(tf_X_test, weights) + biases)
 
 def accuracy(predictions, labels):
-    return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
-          / predictions.shape[0])
+    num_correct = np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
+    return 100.0 * num_correct / predictions.shape[0]
 
 with tf.Session(graph=graph) as session:
     tf.initialize_all_variables().run()
     print('Initialized')
-    for step in range(num_steps):
-    _, l, predictions = session.run([optimizer, loss, train_prediction])
-    if (step % 100 == 0):
-        print('Loss at step {}: {}'.format((step, l)))
-        print('Training accuracy: {:.2%}}'.format(accuracy(
-        predictions, train_labels[:train_subset, :])))
+    for step in range(GD_STEPS):
+        _, l, predictions = session.run([optimizer, loss, train_prediction])
+        if (step % 100 == 0):
+            print('Loss at step {}: {}'.format(step, l))
+            print('Training accuracy: {:.2f}%'
+                  ''.format(accuracy(predictions, y_train)))
 
-        print('Validation accuracy: {:.2%}}'.format(accuracy(
-        valid_prediction.eval(), valid_labels)))
-    print('Test accuracy: {:.2%}'.format(accuracy(test_prediction.eval(), 
-                                        test_labels)))
-
+            print('Validation accuracy: {:.2f}%'.format(accuracy(
+            valid_prediction.eval(), y_valid)))
+    print('Test accuracy: {:.2f}%'
+          ''.format(accuracy(test_prediction.eval(), y_test)))
