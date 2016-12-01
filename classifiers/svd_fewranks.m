@@ -1,28 +1,25 @@
-% Note: This code uses svd once instead svds many times to be faster when
-% searching for the best order of approximation to use 
+% Note: When testing many ranks, use svd_allranks.m
 close all
 clear all
 
-ranks2try = 'all';
-
-% load data/notMNIST_small.mat;
-% % load data/notMNIST_large.mat;
-
-% % reshape
-% X = permute(images, [3 1 2]);
-% [m h w] = size(X);
-% X = reshape(X, [m h*w]);
-% y = labels_unique';
-
-% remove duplicates (this does some unwanted sorting also)
-% [X, iuniq, iorig] = unique(X, 'rows');
-% y = y(iuniq);
-% printf(['\nWarning: ' num2str(m - length(y)) ' duplicates removed.\n'])
-% [m, n] = size(X);
+% User Parameters
+DATASET = 'usps';
+VALIDATION_SIZE = .2;  % integer of decimal (percentage)
+TESTING_SIZE = .2;  % integer of decimal (percentage)
+RANKS2TRY = 'all';  % must be 'all' or list of integers
 
 datadir = fullfile(fileparts(fileparts(mfilename('fullpath'))), 'data');
-% load X, y
-load(fullfile(datadir, 'notMNIST', 'notMNIST_small_no_duplicates.mat'))
+if lower(DATASET) == 'usps'
+    load(fullfile(datadir, 'usps', 'USPS.mat'))
+elseif lower(DATASET) == 'mnist'
+	load(fullfile(datadir, 'mnist', 'MNIST.mat'))
+elseif lower(DATASET) == 'notmnist_small'
+    load(fullfile(datadir, 'notMNIST', 'notMNIST_small_no_duplicates.mat'))
+elseif lower(DATASET) == 'notmnist_large'
+    load(fullfile(datadir, 'notMNIST', 'notMNIST_large_no_duplicates.mat'))
+else
+    dataset_dict = loadmat(DATASET)
+end
 
 [m h w] = size(X);
 n = w*h;
@@ -34,8 +31,10 @@ X = X(shuffle, :);
 y = y(shuffle, :);
 
 % parse ranks2try
-if ranks2try == 'all'
+if RANKS2TRY == 'all'
 	ranks2try = 1:rank(X);
+else
+	ranks2try = RANKS2TRY
 end
 
 % define some variables for convenience
@@ -43,8 +42,16 @@ distinct_labels = unique(y)';
 
 % Let's take 10k of the training examples to serve as a
 % validation set and another 10k for a testing set
-m_valid = min([round(m/5), 10^4]);
-m_test = min([round(m/5), 10^4]);
+if VALIDATION_SIZE < 1
+	m_valid = round(VALIDATION_SIZE*m);
+else
+	m_valid = VALIDATION_SIZE
+end
+if TESTING_SIZE < 1
+	m_test = round(TESTING_SIZE*m);
+else
+	m_test = TESTING_SIZE
+end
 m_train = m - m_valid - m_test;
 X_valid = X(1:m_valid, :);
 y_valid = y(1:m_valid, :);
@@ -82,18 +89,13 @@ tic
 % X_test = sparse(X_test);
 
 printf('\n\nTraining & Validation Stage:\n')
-V = NaN(n, n, length(distinct_labels));
-for l=distinct_labels
-	[u s V(:,:,l+1)] = svd(X_train( find(y_train == l) , :));
-end
-clear u s
 rank_accuracy = NaN(size(ranks2try));
 for k=ranks2try
-	% tic
+	tic
 	predicted_labels_valid = NaN(size(y_valid));
 	mins_valid = inf(size(y_valid));
 	for l=distinct_labels
-		Vlk = V(:, 1:k, l+1);
+		[Ulk, Slk, Vlk] = svds(X_train( find(y_train == l) , :), k);
 		X_valid_approx = (Vlk*Vlk'*X_valid')';
 		d = sum((X_valid - X_valid_approx).^2, 2);
 		update_here = find(d < mins_valid);
@@ -101,9 +103,9 @@ for k=ranks2try
 		predicted_labels_valid(update_here) = l;
 	end
 	accuracy = sum(y_valid==predicted_labels_valid) / m_valid;
-	printf(['rank = ' num2str(k) '  |  ' num2str(accuracy)])
 	rank_accuracy(find(ranks2try==k)) = accuracy;
-	% toc
+	printf(['rank = ' num2str(k) '  |  Accuracy: ' num2str(accuracy) '  |  '])
+	toc
 end
 
 plot(ranks2try, rank_accuracy)
@@ -114,8 +116,7 @@ best_k = ranks2try(max_acc_idx)
 predicted_labels_test = NaN(size(y_test));
 mins_test = inf(size(y_test));
 for l=distinct_labels
-	[Ul, Sl, Vl] = svd(X_train( find(y_train == l) , :));
-	Vlk = Vl(:, 1:best_k);
+	[Ulk, Slk, Vlk] = svds(X_train( find(y_train == l) , :), best_k);
 
 	% try out this label's approximation for X_test 
 	X_test_approx = (Vlk*Vlk'*X_test')';
