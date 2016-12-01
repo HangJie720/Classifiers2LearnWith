@@ -16,4 +16,4 @@ Navigate to Classifiers2LearnWith/Classifiers directory, then run whichever you 
 
 Note on Matlab
 --------------
-When coding this I used Octave 4.2.0-rc2 ... I don't think you'll have any problems compiling the contained .m files with MATLAB, except that I have some suspicion that matlab does not have a built-in `argv()` function, to grab CLI inputs.
+When coding this I used Octave 4.2.0-rc2 ... I don't think you'll have any problems compiling the contained .m files with MATLAB, except that I have some suspicion that matlab does not have a built-in `argv()` function to grab CLI inputs.
