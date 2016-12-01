@@ -1,6 +1,5 @@
 """
-TensorFlow 1-layer fully_connected with (non-stochastic) gradient descent.
-Credit: Some of this code is taken from Udacity TensorFlow course.
+Multinomial Logistic Regression using TensorFlow.
 """
 
 # Standard Library Dependencies
@@ -20,8 +19,10 @@ import tensorflow as tf
 DATASET = 'usps'
 VALIDATION_PERCENTAGE = .2
 TESTING_PERCENTAGE = .2
-GD_STEPS = 1000
+DESCENT_STEPS = 1000
 NORMALIZE = False
+BATCH_SIZE = 128
+USE_NONSTOCHASTIC_GD = False  # just for fun, slow...
 assert 0 < VALIDATION_PERCENTAGE + TESTING_PERCENTAGE < 1
 
 # Load dataset
@@ -92,8 +93,13 @@ print("Data type:", X_train.dtype)
 graph = tf.Graph()
 with graph.as_default():
     # Specify shape of input
-    tf_X_train = tf.constant(X_train)
-    tf_y_train = tf.constant(y_train)
+    if USE_NONSTOCHASTIC_GD:
+        tf_X_train = tf.constant(X_train)
+        tf_y_train = tf.constant(y_train)
+    else:
+        tf_X_train = tf.placeholder(tf.float32, shape=(BATCH_SIZE, n))
+        tf_y_train = tf.placeholder(tf.float32, shape=(BATCH_SIZE, 
+                                                    len(distinct_labels)))
     tf_X_valid = tf.constant(X_valid)
     tf_X_test = tf.constant(X_test)
 
@@ -119,12 +125,28 @@ def accuracy(predictions, labels):
 with tf.Session(graph=graph) as session:
     tf.initialize_all_variables().run()
     print('Initialized')
-    for step in range(GD_STEPS):
-        _, l, predictions = session.run([optimizer, loss, train_prediction])
+    for step in range(DESCENT_STEPS):
+        if USE_NONSTOCHASTIC_GD:
+            _, l, predictions = session.run([optimizer, loss, 
+                                                train_prediction])
+        else:
+
+            offset = (step * BATCH_SIZE) % (y_train.shape[0] - BATCH_SIZE)
+            X_batch = X_train[offset:(offset + BATCH_SIZE), :]
+            y_batch = y_train[offset:(offset + BATCH_SIZE), :]
+            feed_dict = {tf_X_train : X_batch, tf_y_train : y_batch}
+            _, l, predictions = session.run([optimizer, loss, 
+                                                train_prediction], 
+                                            feed_dict=feed_dict)
         if (step % 100 == 0):
-            print('Loss at step {}: {}'.format(step, l))
-            print('Training accuracy: {:.2f}%'
-                  ''.format(accuracy(predictions, y_train)))
+            if USE_NONSTOCHASTIC_GD:
+                print('Loss at step {}: {}'.format(step, l))
+                print('Training accuracy: {:.2f}%'
+                      ''.format(accuracy(predictions, y_train)))
+            else:
+                print('Batch loss at step {}: {}'.format(step, l))
+                print('Batch training accuracy: {:.2f}%'
+                      ''.format(accuracy(predictions, y_batch)))
 
             print('Validation accuracy: {:.2f}%'.format(accuracy(
             valid_prediction.eval(), y_valid)))
