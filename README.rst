@@ -2,13 +2,13 @@ Classifiers2LearnWith
 =====================
 This is a library of classifiers put together by Andy Port for his own self-enrichment.
 
-Database Formatting
--------------------
+Database Formatting Standard
+----------------------------
 All databases are formatted in a similar way, as a MATLAB .mat file containing a tensor `X` containing sample points (indexed by the first dimension) and a column vector `y` containing labels.
 
 To Get Databases
 ----------------
-With the exception of small databases (e.g. the USPS database of handwritten digits), you must use the shell scripts `get_*.sh` to download (and format) each database.  Note: If you're on Windows, check out the `README.txt` files in each database's directory or just go through the steps in the `get_*.sh` files -- they mostly just download the compressed databases, extract them, then run some python or octave scripts to reformat them.
+With the exception of small databases (e.g. the USPS database of handwritten digits), you must use the shell scripts `get_*.sh` to download (and format) each database.  Note: If you're on Windows, check out the `README.txt` files in each database's directory or just go through the steps in the `get_*.sh` files -- all these scripts do is: download the compressed databases, decompress/decode them, then run some python and/or octave scripts to reformat them to the above database formatting standard.
 
 To Run the Classifiers
 ----------------------
