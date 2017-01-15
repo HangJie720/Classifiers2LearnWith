@@ -1,5 +1,5 @@
 """
-K-Means
+Classify by distance from mean
 """
 
 # Standard Library Dependencies
@@ -16,10 +16,8 @@ from numpy.linalg import norm as norm2
 # %matplotlib inline  # use when in JUPYTER NOTEBOOK (or risk hang)
 # plt.ion()  # allow ipython %run to terminate without closing figure
 
-# Internal Dependencies
-# from classifiers import KMEANS
 
-class KMeans:
+class distance_from_mean_classifier(object):
     def train(self, X_train, y_train):
         distinct_labels = np.array(list(distinct_labels))
         label_means = []
