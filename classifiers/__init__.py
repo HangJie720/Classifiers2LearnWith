@@ -1,0 +1,1 @@
+from .bymean import DistanceFromMeanClassifier
