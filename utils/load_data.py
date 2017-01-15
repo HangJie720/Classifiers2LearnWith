@@ -21,10 +21,12 @@ def parentdir(path_, n=1):
         path_ = os.path.dirname(path_)
     return path_
 
+_default_ytype = 'float32'
 
 def load_data(dataset, validpart=None, testpart=None, one_hot=False,
               flatten=True, shuffle=True, center=False, normalize=False,
-              xtype='float32', ytype='float32'):
+              xtype='float32', ytype=_default_ytype,
+              force_index_friendly_labels=False):
     assert 0 < validpart + testpart < 1
 
     # Load dataset
@@ -48,9 +50,13 @@ def load_data(dataset, validpart=None, testpart=None, one_hot=False,
     else:
         dataset_dict = loadmat(dataset)
 
-
     X = dataset_dict['X']
     Y = dataset_dict['y'].flatten()
+
+    # force index friendly labels, if requested (and and one-hot not requested)
+    if force_index_friendly_labels and not one_hot:
+        label2num = dict([(l, n) for n, l in enumerate(np.unique(Y))])
+        Y = np.array([label2num[y] for y in Y], dtype='int8')
 
     # Flatten images
     if len(X.shape) == 3:
@@ -78,7 +84,7 @@ def load_data(dataset, validpart=None, testpart=None, one_hot=False,
 
     if xtype:
         X = X.astype(xtype)
-    if ytype:
+    if ytype and (not force_index_friendly_labels and ytype != _default_ytype):
         Y = Y.astype(ytype)
 
     # normalize data
