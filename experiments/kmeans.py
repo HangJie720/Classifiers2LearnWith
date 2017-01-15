@@ -1,9 +1,9 @@
 """
-Fully Connected Single Hidden Layer Network using TensorFlow.
+K-Means
 """
 
 # Standard Library Dependencies
-from __future__ import division, print_function
+from __future__ import division, print_function, absolute_import
 from warnings import warn
 from time import time
 import os
@@ -16,8 +16,44 @@ from numpy.linalg import norm as norm2
 # %matplotlib inline  # use when in JUPYTER NOTEBOOK (or risk hang)
 # plt.ion()  # allow ipython %run to terminate without closing figure
 
+# Internal Dependencies
+# from classifiers import KMEANS
+
+class KMeans:
+    def train(self, X_train, y_train):
+        distinct_labels = np.array(list(distinct_labels))
+        label_means = []
+        sds = []
+        label_variances = []
+        for l in distinct_labels:
+            Xl = [x for x, y in zip(X_train, y_train) if y == l]  # examples labeled l
+            mean_l = np.mean(Xl, axis=0)
+            label_means.append(mean_l)
+
+            # Compute S.D. for each examples of each label
+            s_l = np.std([norm2(x - mean_l) for x in Xl])
+            label_variances.append(s_l)
+
+        # Check how far away means are from each other.
+        for i, mi in enumerate(label_means):
+            d2i = [(j, norm2(mi - mj)) for j, mj in enumerate(label_means) if i!=j]
+            j, dij = min(d2i, key=itemgetter(1))
+            si, sj = np.sqrt(label_variances[i]), np.sqrt(label_variances[j])
+            print("label {} :: nearest label = {} :: dist = {}) :: "
+                  "sd_{} = {} :: sd_{} = {}"
+                  "".format(i, j, dij, i, si, j, sj))
+        self.means = np.array(label_means)
+        self.sds = np.sqrt(np.array(label_variances))
+        self.ordered_labels = distinct_labels
+
+    def predict(X):
+        pred_indices = np.argmin([norm2(X - m, axis=1) for m in self.means], axis=0)
+        return ordered_labels[pred_indices]
+
+
+########################################################################       
 # User Parameters
-DATASET = 'notmnist_small'
+DATASET = 'USPS'
 VALIDATION_PERCENTAGE = 0
 TESTING_PERCENTAGE = .3
 NORMALIZE = False
@@ -86,46 +122,17 @@ y_test = y[m_train + m_valid : len(y) + 1]
 # if BATCH_LIMIT:
 #     limit = BATCH_LIMIT*BATCH_SIZE
 #     X_train = X_train[:limit, :]
-#     y_train = y_train[:limit]
-
+#     Y_train = Y_train[:limit]
 
 ### Classification by distance from mean
 print("Training Set Shape:", X_train.shape)
 print("Testing Set Shape:", X_train.shape)
 print("Data type:", X_train.dtype)
 
-distinct_labels = np.array(list(distinct_labels))
-label_means = []
-sds = []
-label_variances = []
-for l in distinct_labels:
-    Xl = [x for x, y in zip(X_train, y_train) if y == l]  # examples labeled l
-    mean_l = np.mean(Xl, axis=0)
-    label_means.append(mean_l)
+    # Training set predictions and score
+    predictions_train = predict(X_train, label_means, distinct_labels)
+    print("Training Set Accuracy:", sum(y_train == predictions_train)/m_train)
 
-    # Compute S.D. for each examples of each label 
-    s_l = np.std([norm2(x - mean_l) for x in Xl])
-    label_variances.append(s_l)
-
-# Check how far away means are from each other.
-for i, mi in enumerate(label_means):
-    d2i = [(j, norm2(mi - mj)) for j, mj in enumerate(label_means) if i!=j]
-    j, dij = min(d2i, key=itemgetter(1))
-    si, sj = np.sqrt(label_variances[i]), np.sqrt(label_variances[j])
-    print("label {} :: nearest label = {} :: dist = {}) :: "
-          "sd_{} = {} :: sd_{} = {}"
-          "".format(i, j, dij, i, si, j, sj))
-
-def predict(X_, means, ordered_labels=None):
-    pred_indices = np.argmin([norm2(X_ - m, axis=1) for m in means], axis=0)
-    if ordered_labels is not None:
-        return ordered_labels[pred_indices]
-    return pred_indices
-
-# Training set predictions and score
-predictions_train = predict(X_train, label_means, distinct_labels)
-print("Training Set Accuracy:", sum(y_train == predictions_train)/m_train)
-
-# Test set predictions and score
-predictions_test = predict(X_test, label_means, distinct_labels)
-print("Test Set Accuracy:", sum(y_test == predictions_test)/m_test)
+    # Test set predictions and score
+    predictions_test = predict(X_test, label_means, distinct_labels)
+    print("Test Set Accuracy:", sum(y_test == predictions_test)/m_test)

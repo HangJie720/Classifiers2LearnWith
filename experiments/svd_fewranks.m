@@ -61,8 +61,8 @@ X_train = X(m_valid+m_test+1: end, :);
 y_train = y(m_valid+m_test+1: end, :);
 
 % normalize data
-% X = X - mean(X);  % hurts accuracy
-% X = X./mean(sum((X-mean(X)).^2));  % doesn't help accuracy
+% X = X - mean(X);  % hurts score
+% X = X./mean(sum((X-mean(X)).^2));  % doesn't help score
 
 printf('\nCheck Balance:\n')
 printf('Totals -- ')
@@ -102,9 +102,9 @@ for k=ranks2try
 		mins_valid(update_here) = d(update_here);
 		predicted_labels_valid(update_here) = l;
 	end
-	accuracy = sum(y_valid==predicted_labels_valid) / m_valid;
-	rank_accuracy(find(ranks2try==k)) = accuracy;
-	printf(['rank = ' num2str(k) '  |  Accuracy: ' num2str(accuracy) '  |  '])
+	score = sum(y_valid==predicted_labels_valid) / m_valid;
+	rank_accuracy(find(ranks2try==k)) = score;
+	printf(['rank = ' num2str(k) '  |  Accuracy: ' num2str(score) '  |  '])
 	toc
 end
 
@@ -126,5 +126,5 @@ for l=distinct_labels
 	predicted_labels_test(update_here) = l;
 end
 
-accuracy = sum(y_test == predicted_labels_test) / m_test
+score = sum(y_test == predicted_labels_test) / m_test
 toc
