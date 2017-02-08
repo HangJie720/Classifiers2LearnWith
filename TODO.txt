@@ -1,4 +1,10 @@
-done? 0) Fix deep fully-connected (why is loss blowing up?)
-0.5) get network diagram to display
-1) invert a network
-2) make a cnn and understand the model
+0) Fix deep fully-connected (why is loss blowing up?)
+1) experiment with fully-connected (and other) network inversions
+
+Poossible Future additions/experiments:
+a) simple Naive Bayes classifier
+b) an ensemble method
+c) linear SVM vs logistic comparison
+d) nonlinear SVMs
+e) LDA
+f) random forest
