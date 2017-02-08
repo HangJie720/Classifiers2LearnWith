@@ -12,7 +12,7 @@ With the exception of small datasets (e.g. the USPS dataset of handwritten digit
 
 To Run the Classifiers
 ----------------------
-Navigate to Classifiers2LearnWith/Classifiers directory, then run whichever you like.
+Navigate to Classifiers2LearnWith/experiments directory, then run whichever you like.
 
 Note on Matlab
 --------------
