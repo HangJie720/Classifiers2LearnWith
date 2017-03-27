@@ -9,7 +9,6 @@ from scipy.io import loadmat
 
 
 def split_data(X, Y, testpart, validpart=0, shuffle=True):
-
     """Split data into training, validation, and test sets.
     Args:
         X: any sliceable iterable
@@ -18,7 +17,11 @@ def split_data(X, Y, testpart, validpart=0, shuffle=True):
         testpart: int or float proportion
         shuffle: bool
     """
+    import random
     m = len(Y)
+    assert (isinstance(testpart, int) and isinstance(validpart, int)) \
+        or (0 <= testpart < 1 and 0 <= validpart < 1)
+
 
     # shuffle data
     if shuffle:
@@ -27,7 +30,7 @@ def split_data(X, Y, testpart, validpart=0, shuffle=True):
         X = X[permutation]
         Y = Y[permutation]
 
-    if 0 < validpart < 1 and 0 < testpart < 1:
+    if 0 < validpart < 1:
         m_valid = int(validpart * m)
         m_test = int(testpart * m)
         m_train = len(Y) - m_valid - m_test
