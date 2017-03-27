@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """ 
 Very Deep Convolutional Networks for Large-Scale Visual Recognition.
 Applying VGG 16-layers convolutional network to Oxford's 17 Category Flower

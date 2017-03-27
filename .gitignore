@@ -1,6 +1,7 @@
 *.pyc
 *.mat
 .*
+results
 octave-workspace
 !data/usps/USPS.mat
 !.gitignore

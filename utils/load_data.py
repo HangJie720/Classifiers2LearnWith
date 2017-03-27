@@ -2,8 +2,50 @@
 
 from __future__ import division, print_function, absolute_import
 import os
+import random
+
 import numpy as np
 from scipy.io import loadmat
+
+
+def split_data(X, Y, testpart, validpart=0, shuffle=True):
+
+    """Split data into training, validation, and test sets.
+    Args:
+        X: any sliceable iterable
+        Y: any sliceable iterable
+        validpart: int or float proportion
+        testpart: int or float proportion
+        shuffle: bool
+    """
+    m = len(Y)
+
+    # shuffle data
+    if shuffle:
+        permutation = range(m)
+        random.shuffle(permutation)
+        X = X[permutation]
+        Y = Y[permutation]
+
+    if 0 < validpart < 1 and 0 < testpart < 1:
+        m_valid = int(validpart * m)
+        m_test = int(testpart * m)
+        m_train = len(Y) - m_valid - m_test
+    else:
+        m_valid = validpart
+        m_test = testpart
+        m_train = m - m_valid - m_test
+
+    X_train = X[:m_train]
+    Y_train = Y[:m_train]
+
+    X_valid = X[m_train: m_train + m_valid]
+    Y_valid = Y[m_train: m_train + m_valid]
+
+    X_test = X[m_train + m_valid: len(X)]
+    Y_test = Y[m_train + m_valid: len(Y)]
+
+    return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
 
 def k21hot(labels, k):
@@ -23,10 +65,11 @@ def parentdir(path_, n=1):
 
 _default_ytype = 'float32'
 
-def load_data(dataset, validpart=None, testpart=None, one_hot=False,
+
+def load_data(dataset, testpart=0.2, validpart=0.2, one_hot=False,
               flatten=True, shuffle=True, center=False, normalize=False,
               xtype='float32', ytype=_default_ytype,
-              force_index_friendly_labels=False):
+              force_index_friendly_labels=False, resize=False):
     assert 0 < validpart + testpart < 1
 
     # Load dataset
@@ -58,6 +101,7 @@ def load_data(dataset, validpart=None, testpart=None, one_hot=False,
         label2num = dict([(l, n) for n, l in enumerate(np.unique(Y))])
         Y = np.array([label2num[y] for y in Y], dtype='int8')
 
+
     # Flatten images
     if len(X.shape) == 3:
         m, h, w = X.shape
@@ -68,14 +112,6 @@ def load_data(dataset, validpart=None, testpart=None, one_hot=False,
         m, n = X.shape
     else:
         raise ValueError("Data must be matrix or 3-tensor.")
-
-    # shuffle data
-    if shuffle:
-        from random import shuffle
-        permutation = range(m)
-        shuffle(permutation)
-        X = X[permutation]
-        Y = Y[permutation]
 
     # Convert labels to one-hot format
     if one_hot:
@@ -93,16 +129,5 @@ def load_data(dataset, validpart=None, testpart=None, one_hot=False,
         # X = X./mean(sum((X-mean(X)).^2))
         raise NotImplementedError
 
-    m_train = int(0.6*m)
-    X_train = X[:m_train]
-    Y_train = Y[:m_train]
 
-    m_valid = int(0.2*m)
-    X_valid = X[m_train: m_train + m_valid + 1]
-    Y_valid = Y[m_train: m_train + m_valid + 1]
-
-    m_test = m - m_valid - m_train
-    X_test = X[m_train + m_valid: len(X) + 1]
-    Y_test = Y[m_train + m_valid: len(Y) + 1]
-
-    return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
+    return split_data(X, Y, testpart, validpart, False)
