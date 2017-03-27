@@ -42,7 +42,7 @@ def split_data(X, Y, testpart, validpart=0, shuffle=True):
         X = X[permutation]
         Y = Y[permutation]
 
-    if 0 < validpart < 1:
+    if 0 < testpart < 1:
         m_valid = int(validpart * m)
         m_test = int(testpart * m)
         m_train = len(Y) - m_valid - m_test
